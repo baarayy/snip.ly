@@ -6,10 +6,10 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          navy: "#15173D",
-          purple: "#982598",
-          pink: "#E491C9",
-          cream: "#F1E9E9",
+          navy: "rgb(var(--brand-navy-rgb) / <alpha-value>)",
+          purple: "rgb(var(--brand-purple-rgb) / <alpha-value>)",
+          pink: "rgb(var(--brand-pink-rgb) / <alpha-value>)",
+          cream: "rgb(var(--brand-cream-rgb) / <alpha-value>)",
         },
       },
       fontFamily: {

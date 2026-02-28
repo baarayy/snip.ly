@@ -7,6 +7,12 @@
 /* ── Design Tokens ─────────────────────────────────────── */
 :root,
 [data-theme="dark"] {
+  /* Brand RGB triples for Tailwind alpha support */
+  --brand-navy-rgb: 21 23 61;
+  --brand-purple-rgb: 152 37 152;
+  --brand-pink-rgb: 228 145 201;
+  --brand-cream-rgb: 241 233 233;
+
   --navy: #15173d;
   --navy-light: #1c1f4a;
   --navy-surface: #1e2152;
@@ -27,7 +33,7 @@
   --border-hover: rgba(228, 145, 201, 0.35);
   --border-active: rgba(152, 37, 152, 0.5);
   --glass-bg: rgba(21, 23, 61, 0.55);
-  --glass-blur: 24px;
+  --glass-blur: 16px;
   --tab-active-bg: rgba(152, 37, 152, 0.2);
   --tab-active-border: rgba(152, 37, 152, 0.2);
   --toast-bg: rgba(21, 23, 61, 0.92);
@@ -59,6 +65,12 @@
 }
 
 [data-theme="light"] {
+  /* Brand RGB triples for Tailwind alpha support */
+  --brand-navy-rgb: 248 246 255;
+  --brand-purple-rgb: 124 45 142;
+  --brand-pink-rgb: 192 106 175;
+  --brand-cream-rgb: 30 27 46;
+
   --navy: #f8f6ff;
   --navy-light: #efe9fb;
   --navy-surface: #f0ecf7;
@@ -79,7 +91,7 @@
   --border-hover: rgba(155, 89, 182, 0.3);
   --border-active: rgba(124, 45, 142, 0.45);
   --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-blur: 20px;
+  --glass-blur: 12px;
   --tab-active-bg: rgba(124, 45, 142, 0.12);
   --tab-active-border: rgba(124, 45, 142, 0.15);
   --toast-bg: rgba(255, 255, 255, 0.95);
@@ -90,11 +102,11 @@
   --scrollbar-hover: #7c2d8e;
   --skeleton-from: rgba(124, 45, 142, 0.06);
   --skeleton-to: rgba(124, 45, 142, 0.12);
-  --orb-purple: rgba(124, 45, 142, 0.12);
-  --orb-pink: rgba(192, 106, 175, 0.1);
-  --orb-cream: rgba(155, 89, 182, 0.06);
-  --grid-opacity: 0.02;
-  --ray-opacity: 0.35;
+  --orb-purple: rgba(124, 45, 142, 0.18);
+  --orb-pink: rgba(192, 106, 175, 0.14);
+  --orb-cream: rgba(155, 89, 182, 0.08);
+  --grid-opacity: 0.03;
+  --ray-opacity: 0.45;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -144,7 +156,7 @@ body {
 
 /* ── Selection ─────────────────────────────────────────── */
 ::selection {
-  background: rgba(152, 37, 152, 0.4);
+  background: rgba(var(--brand-purple-rgb) / 0.4);
   color: var(--cream);
 }
 
@@ -278,27 +290,27 @@ body {
 }
 
 .btn-secondary {
-  background: rgba(152, 37, 152, 0.15);
+  background: rgb(var(--brand-purple-rgb) / 0.15);
   color: var(--cream);
   font-weight: 500;
-  border: 1px solid rgba(152, 37, 152, 0.25);
+  border: 1px solid rgb(var(--brand-purple-rgb) / 0.25);
   border-radius: var(--radius-md);
   transition: all var(--transition-base);
 }
 .btn-secondary:hover {
-  background: rgba(152, 37, 152, 0.25);
-  border-color: rgba(152, 37, 152, 0.4);
+  background: rgb(var(--brand-purple-rgb) / 0.25);
+  border-color: rgb(var(--brand-purple-rgb) / 0.4);
 }
 
 .btn-ghost {
   background: transparent;
-  color: rgba(241, 233, 233, 0.7);
+  color: var(--text-muted);
   font-weight: 500;
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
 }
 .btn-ghost:hover {
-  background: rgba(152, 37, 152, 0.1);
+  background: rgb(var(--brand-purple-rgb) / 0.1);
   color: var(--cream);
 }
 
@@ -330,16 +342,17 @@ body {
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(50px);
   opacity: 0.3;
   pointer-events: none;
+  will-change: transform;
 }
 
 /* ── Animated light rays ───────────────────────────────── */
 .light-rays {
   position: absolute;
-  width: 200vmax;
-  height: 200vmax;
+  width: 120vmax;
+  height: 120vmax;
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
@@ -370,7 +383,7 @@ body {
   );
   animation: ray-rotate 45s linear infinite;
   opacity: var(--ray-opacity);
-  filter: blur(1px);
+  will-change: transform;
   transition: opacity 0.5s ease;
 }
 
@@ -383,46 +396,7 @@ body {
   }
 }
 
-/* ── Aurora sweep ──────────────────────────────────────── */
-.aurora {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    var(--orb-purple) 40%,
-    transparent 50%,
-    var(--orb-pink) 60%,
-    transparent 70%
-  );
-  background-size: 400% 400%;
-  animation: aurora-drift 20s ease infinite;
-  opacity: 0.4;
-  filter: blur(100px);
-  pointer-events: none;
-  transition: opacity 0.5s ease;
-}
-
-@keyframes aurora-drift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-    transform: rotate(0deg);
-  }
-  25% {
-    background-position: 100% 50%;
-  }
-  50% {
-    background-position: 100% 100%;
-    transform: rotate(3deg);
-  }
-  75% {
-    background-position: 0% 100%;
-  }
-}
+/* ── Aurora sweep (removed for performance) ─────────── */
 
 /* ── Pulsing ring ──────────────────────────────────────── */
 .pulse-ring {
@@ -503,7 +477,7 @@ textarea::placeholder {
   color: #fbbf24;
 }
 .token-comment {
-  color: rgba(241, 233, 233, 0.35);
+  color: var(--text-subtle);
   font-style: italic;
 }
 .token-keyword {

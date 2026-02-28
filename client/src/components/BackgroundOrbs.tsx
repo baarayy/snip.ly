@@ -2,71 +2,49 @@
 
 export default function BackgroundOrbs() {
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none transition-opacity duration-500">
+    <div
+      className="fixed inset-0 z-0 overflow-hidden pointer-events-none"
+      style={{ willChange: "auto", contain: "strict" }}
+    >
       {/* Top-left purple orb */}
       <div
         className="orb animate-float"
         style={{
-          width: 500,
-          height: 500,
-          top: "-10%",
+          width: 420,
+          height: 420,
+          top: "-8%",
           left: "-5%",
           background:
             "radial-gradient(circle, var(--orb-purple) 0%, transparent 70%)",
+          willChange: "transform",
         }}
       />
       {/* Center-right pink orb */}
       <div
         className="orb animate-float"
         style={{
-          width: 400,
-          height: 400,
+          width: 340,
+          height: 340,
           top: "30%",
-          right: "-8%",
+          right: "-6%",
           background:
             "radial-gradient(circle, var(--orb-pink) 0%, transparent 70%)",
           animationDelay: "2s",
+          willChange: "transform",
         }}
       />
       {/* Bottom-left cream orb */}
       <div
         className="orb animate-float"
         style={{
-          width: 350,
-          height: 350,
+          width: 280,
+          height: 280,
           bottom: "5%",
           left: "15%",
           background:
             "radial-gradient(circle, var(--orb-cream) 0%, transparent 70%)",
           animationDelay: "4s",
-        }}
-      />
-
-      {/* Additional floating particles */}
-      <div
-        className="orb animate-float"
-        style={{
-          width: 200,
-          height: 200,
-          top: "60%",
-          right: "20%",
-          background:
-            "radial-gradient(circle, var(--orb-purple) 0%, transparent 70%)",
-          animationDelay: "1s",
-          animationDuration: "8s",
-        }}
-      />
-      <div
-        className="orb animate-float"
-        style={{
-          width: 150,
-          height: 150,
-          top: "15%",
-          left: "45%",
-          background:
-            "radial-gradient(circle, var(--orb-pink) 0%, transparent 70%)",
-          animationDelay: "3s",
-          animationDuration: "10s",
+          willChange: "transform",
         }}
       />
 
@@ -74,9 +52,6 @@ export default function BackgroundOrbs() {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="light-rays" />
       </div>
-
-      {/* Aurora sweep */}
-      <div className="aurora" />
 
       {/* Subtle grid overlay */}
       <div
