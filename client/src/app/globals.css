@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --navy: #15173d;
+  --purple: #982598;
+  --pink: #e491c9;
+  --cream: #f1e9e9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--navy);
+  color: var(--cream);
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--purple);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pink);
+}
+
+/* ── Selection ─────────────────────────────────────────── */
+::selection {
+  background: rgba(152, 37, 152, 0.4);
+  color: var(--cream);
+}
+
+/* ── Gradient text helper ──────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--purple), var(--pink), var(--cream));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass card ────────────────────────────────────────── */
+.glass {
+  background: rgba(21, 23, 61, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(152, 37, 152, 0.2);
+}
+
+.glass-hover:hover {
+  border-color: rgba(228, 145, 201, 0.4);
+  box-shadow: 0 0 30px rgba(152, 37, 152, 0.15);
+}
+
+/* ── Animated gradient border ──────────────────────────── */
+.gradient-border {
+  position: relative;
+  border-radius: 16px;
+}
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--purple),
+    var(--pink),
+    var(--cream),
+    var(--purple)
+  );
+  background-size: 300% 300%;
+  animation: gradientX 8s ease infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@keyframes gradientX {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ── Shimmer button ────────────────────────────────────── */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+.btn-shimmer:hover::after {
+  left: 100%;
+}
+
+/* ── Floating orbs background ──────────────────────────── */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ── Input focus glow ──────────────────────────────────── */
+input:focus,
+textarea:focus {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(152, 37, 152, 0.5),
+    0 0 20px rgba(152, 37, 152, 0.15);
+}
+
+/* ── Toast overrides ───────────────────────────────────── */
+[data-sonner-toaster] {
+  font-family: "Inter", system-ui, sans-serif !important;
+}

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # ─── Infrastructure ────────────────────────────────────────
   postgres:
@@ -156,6 +154,21 @@ services:
       - url-service
       - redirect-service
       - analytics-service
+    networks:
+      - url-shortener-net
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: url-shortener-client
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      INTERNAL_API_URL: http://api-gateway:80
+    depends_on:
+      - api-gateway
     networks:
       - url-shortener-net
 
