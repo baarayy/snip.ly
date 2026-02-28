@@ -81,6 +81,7 @@ class TrendingViewTest(SimpleTestCase):
     def test_trending_empty(self, mock_get_db):
         """When no click events exist, return empty trending list."""
         mock_collection = MagicMock()
+        mock_collection.distinct.return_value = []
         mock_collection.aggregate.return_value = iter([])
         mock_db = MagicMock()
         mock_db.click_events = mock_collection
@@ -93,12 +94,18 @@ class TrendingViewTest(SimpleTestCase):
         data = self._json(response)
         self.assertEqual(data["trending"], [])
         self.assertEqual(data["total"], 0)
+        self.assertEqual(data["page"], 1)
+        self.assertEqual(data["pageSize"], 20)
+        self.assertEqual(data["totalPages"], 1)
+        self.assertFalse(data["hasNext"])
+        self.assertFalse(data["hasPrev"])
 
     @patch("analytics.views.requests.get")
     @patch("analytics.views.get_db")
     def test_trending_returns_enriched_data(self, mock_get_db, mock_http_get):
         """Trending returns top codes enriched with longUrl."""
         mock_collection = MagicMock()
+        mock_collection.distinct.return_value = ["abc1234", "xyz9876"]
         mock_collection.aggregate.return_value = iter([
             {"_id": "abc1234", "totalClicks": 100},
             {"_id": "xyz9876", "totalClicks": 50},
@@ -113,12 +120,17 @@ class TrendingViewTest(SimpleTestCase):
         mock_resp.json.return_value = {"longUrl": "https://example.com"}
         mock_http_get.return_value = mock_resp
 
-        request = self.factory.get("/api/v1/trending?limit=5")
+        request = self.factory.get("/api/v1/trending?page=1&pageSize=5")
         response = TrendingView.as_view()(request)
 
         self.assertEqual(response.status_code, 200)
         data = self._json(response)
         self.assertEqual(data["total"], 2)
+        self.assertEqual(data["page"], 1)
+        self.assertEqual(data["pageSize"], 5)
+        self.assertEqual(data["totalPages"], 1)
+        self.assertFalse(data["hasNext"])
+        self.assertFalse(data["hasPrev"])
         self.assertEqual(data["trending"][0]["shortCode"], "abc1234")
         self.assertEqual(data["trending"][0]["totalClicks"], 100)
         self.assertEqual(data["trending"][0]["longUrl"], "https://example.com")
@@ -130,6 +142,7 @@ class TrendingViewTest(SimpleTestCase):
     def test_trending_graceful_when_url_service_down(self, mock_get_db, mock_http_get):
         """When url-service is unreachable, longUrl should be None."""
         mock_collection = MagicMock()
+        mock_collection.distinct.return_value = ["abc1234"]
         mock_collection.aggregate.return_value = iter([
             {"_id": "abc1234", "totalClicks": 10},
         ])
@@ -146,21 +159,58 @@ class TrendingViewTest(SimpleTestCase):
         self.assertIsNone(data["trending"][0]["longUrl"])
 
     @patch("analytics.views.get_db")
-    def test_trending_limit_capped_at_50(self, mock_get_db):
-        """Limit parameter should be capped at 50."""
+    def test_trending_pagesize_capped_at_100(self, mock_get_db):
+        """pageSize parameter should be capped at 100."""
         mock_collection = MagicMock()
+        mock_collection.distinct.return_value = []
         mock_collection.aggregate.return_value = iter([])
         mock_db = MagicMock()
         mock_db.click_events = mock_collection
         mock_get_db.return_value = mock_db
 
-        request = self.factory.get("/api/v1/trending?limit=999")
+        request = self.factory.get("/api/v1/trending?pageSize=999")
         TrendingView.as_view()(request)
 
-        # Verify the pipeline $limit was capped at 50
+        # Verify the pipeline $limit was capped at 100
         pipeline = mock_collection.aggregate.call_args[0][0]
         limit_stage = [s for s in pipeline if "$limit" in s]
-        self.assertEqual(limit_stage[0]["$limit"], 50)
+        self.assertEqual(limit_stage[0]["$limit"], 100)
+
+    @patch("analytics.views.requests.get")
+    @patch("analytics.views.get_db")
+    def test_trending_pagination_page2(self, mock_get_db, mock_http_get):
+        """Page 2 should skip items and report correct hasPrev/hasNext."""
+        mock_collection = MagicMock()
+        # 3 distinct codes, pageSize=2 → 2 pages
+        mock_collection.distinct.return_value = ["a", "b", "c"]
+        mock_collection.aggregate.return_value = iter([
+            {"_id": "c", "totalClicks": 5},
+        ])
+        mock_db = MagicMock()
+        mock_db.click_events = mock_collection
+        mock_get_db.return_value = mock_db
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"longUrl": "https://c.com"}
+        mock_http_get.return_value = mock_resp
+
+        request = self.factory.get("/api/v1/trending?page=2&pageSize=2")
+        response = TrendingView.as_view()(request)
+
+        data = self._json(response)
+        self.assertEqual(data["page"], 2)
+        self.assertEqual(data["pageSize"], 2)
+        self.assertEqual(data["totalPages"], 2)
+        self.assertTrue(data["hasPrev"])
+        self.assertFalse(data["hasNext"])
+        # rank should be 3 (skip=2, first item on page 2)
+        self.assertEqual(data["trending"][0]["rank"], 3)
+
+        # Verify $skip was 2
+        pipeline = mock_collection.aggregate.call_args[0][0]
+        skip_stage = [s for s in pipeline if "$skip" in s]
+        self.assertEqual(skip_stage[0]["$skip"], 2)
 
     @staticmethod
     def _json(response):
