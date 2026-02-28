@@ -13,7 +13,7 @@ The goal is to design a production-ready microservices-based system capable of h
 
 1.2 Scope
 
-The system will:
+The system will: 
 
 Convert long URLs into short URLs
 
