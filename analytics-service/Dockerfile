@@ -12,8 +12,9 @@ COPY . .
 
 EXPOSE 8083
 
-# Run with gunicorn (1 worker for local dev to keep consumer thread simple)
+# Run with gunicorn (2 workers so HTTP stays responsive while
+# the RabbitMQ consumer thread runs in each worker process)
 CMD ["gunicorn", "analytics_project.wsgi:application", \
      "--bind", "0.0.0.0:8083", \
-     "--workers", "1", \
+     "--workers", "2", \
      "--timeout", "120"]
