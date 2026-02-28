@@ -91,7 +91,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/baarayy/snip.ly"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand-cream/30 hover:text-brand-cream/60 transition-colors"
