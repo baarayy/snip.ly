@@ -1,0 +1,17 @@
+{
+  "name": "url-shortener-benchmarks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Performance benchmarks for the URL Shortener microservices",
+  "scripts": {
+    "bench": "node run-all.js",
+    "bench:url": "node bench-url-service.js",
+    "bench:redirect": "node bench-redirect-service.js",
+    "bench:analytics": "node bench-analytics-service.js",
+    "bench:ws": "node bench-ws-service.js",
+    "bench:gateway": "node bench-gateway.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.7.4"
+  }
+}
