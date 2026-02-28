@@ -2,7 +2,7 @@
 
 export default function BackgroundOrbs() {
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none transition-opacity duration-500">
       {/* Top-left purple orb */}
       <div
         className="orb animate-float"
@@ -12,7 +12,7 @@ export default function BackgroundOrbs() {
           top: "-10%",
           left: "-5%",
           background:
-            "radial-gradient(circle, rgba(152,37,152,0.35) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--orb-purple) 0%, transparent 70%)",
         }}
       />
       {/* Center-right pink orb */}
@@ -24,7 +24,7 @@ export default function BackgroundOrbs() {
           top: "30%",
           right: "-8%",
           background:
-            "radial-gradient(circle, rgba(228,145,201,0.25) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--orb-pink) 0%, transparent 70%)",
           animationDelay: "2s",
         }}
       />
@@ -37,8 +37,36 @@ export default function BackgroundOrbs() {
           bottom: "5%",
           left: "15%",
           background:
-            "radial-gradient(circle, rgba(241,233,233,0.12) 0%, transparent 70%)",
+            "radial-gradient(circle, var(--orb-cream) 0%, transparent 70%)",
           animationDelay: "4s",
+        }}
+      />
+
+      {/* Additional floating particles */}
+      <div
+        className="orb animate-float"
+        style={{
+          width: 200,
+          height: 200,
+          top: "60%",
+          right: "20%",
+          background:
+            "radial-gradient(circle, var(--orb-purple) 0%, transparent 70%)",
+          animationDelay: "1s",
+          animationDuration: "8s",
+        }}
+      />
+      <div
+        className="orb animate-float"
+        style={{
+          width: 150,
+          height: 150,
+          top: "15%",
+          left: "45%",
+          background:
+            "radial-gradient(circle, var(--orb-pink) 0%, transparent 70%)",
+          animationDelay: "3s",
+          animationDuration: "10s",
         }}
       />
 
@@ -47,12 +75,16 @@ export default function BackgroundOrbs() {
         <div className="light-rays" />
       </div>
 
+      {/* Aurora sweep */}
+      <div className="aurora" />
+
       {/* Subtle grid overlay */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(rgba(152,37,152,0.5) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(152,37,152,0.5) 1px, transparent 1px)`,
+          opacity: "var(--grid-opacity)",
+          backgroundImage: `linear-gradient(var(--purple) 1px, transparent 1px),
+                            linear-gradient(90deg, var(--purple) 1px, transparent 1px)`,
           backgroundSize: "60px 60px",
         }}
       />

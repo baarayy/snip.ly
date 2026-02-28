@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -11,11 +11,36 @@ import {
   HiOutlineClock,
 } from "react-icons/hi";
 import { getAnalytics, AnalyticsResponse } from "@/lib/api";
+import { useSocket, ClickEvent } from "@/lib/useSocket";
 
 export default function AnalyticsPage() {
   const [shortCode, setShortCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AnalyticsResponse | null>(null);
+  const { connected, onClickEvent } = useSocket();
+
+  const fetchAnalytics = useCallback(async (code: string) => {
+    try {
+      const result = await getAnalytics(code);
+      setData(result);
+    } catch {
+      /* silently fail on auto-refresh */
+    }
+  }, []);
+
+  // Real-time: auto-refresh when a click event matches the viewed shortCode
+  useEffect(() => {
+    const unsub = onClickEvent((event: ClickEvent) => {
+      if (data && event.shortCode === data.shortCode) {
+        fetchAnalytics(data.shortCode);
+        toast.success(`New click on /${event.shortCode}!`, {
+          icon: "\u26A1",
+          duration: 2000,
+        });
+      }
+    });
+    return unsub;
+  }, [data, onClickEvent, fetchAnalytics]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +135,37 @@ export default function AnalyticsPage() {
           </motion.button>
         </div>
       </motion.form>
+
+      {/* Live indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.25 }}
+        className="flex justify-center mb-8"
+      >
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium"
+          style={{
+            background: connected
+              ? "rgba(74, 222, 128, 0.1)"
+              : "rgba(248, 113, 113, 0.1)",
+            border: connected
+              ? "1px solid rgba(74, 222, 128, 0.2)"
+              : "1px solid rgba(248, 113, 113, 0.2)",
+            color: connected ? "#4ade80" : "#f87171",
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{
+              background: connected ? "#4ade80" : "#f87171",
+              boxShadow: connected ? "0 0 6px #4ade80" : "0 0 6px #f87171",
+              animation: connected ? "pulse 2s ease-in-out infinite" : "none",
+            }}
+          />
+          {connected ? "Live — updates in real-time" : "Connecting..."}
+        </div>
+      </motion.div>
 
       {/* Results */}
       <AnimatePresence mode="wait">

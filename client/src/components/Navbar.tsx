@@ -13,8 +13,11 @@ import {
   HiOutlineFire,
   HiOutlineMenu,
   HiOutlineX,
+  HiOutlineSun,
+  HiOutlineMoon,
 } from "react-icons/hi";
 import { LogoFull } from "./Logo";
+import { useTheme } from "./ThemeProvider";
 
 const links = [
   { href: "/", label: "Shorten", icon: HiOutlineLink },
@@ -28,6 +31,7 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <motion.nav
@@ -56,13 +60,17 @@ export default function Navbar() {
                 href={href}
                 className="relative px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 flex items-center gap-2"
                 style={{
-                  color: isActive ? "#F1E9E9" : "rgba(241,233,233,0.55)",
+                  color: isActive ? "var(--cream)" : "var(--text-muted)",
                 }}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute inset-0 rounded-lg bg-brand-purple/20 border border-brand-purple/20"
+                    className="absolute inset-0 rounded-lg"
+                    style={{
+                      background: "var(--tab-active-bg)",
+                      border: "1px solid var(--tab-active-border)",
+                    }}
                     transition={{ type: "spring", bounce: 0.18, duration: 0.5 }}
                   />
                 )}
@@ -71,6 +79,43 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          {/* Theme toggle */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleTheme}
+            className="ml-2 p-2 rounded-lg transition-colors duration-200"
+            style={{
+              background: "var(--tab-active-bg)",
+              color: "var(--cream)",
+            }}
+            aria-label="Toggle theme"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {theme === "dark" ? (
+                <motion.div
+                  key="sun"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HiOutlineSun className="text-[16px]" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="moon"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <HiOutlineMoon className="text-[16px]" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
 
         {/* Mobile menu button */}

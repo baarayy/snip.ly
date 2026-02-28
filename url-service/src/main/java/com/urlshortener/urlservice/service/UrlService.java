@@ -27,12 +27,17 @@ public class UrlService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${app.short-code-length:7}")
+    private int shortCodeLength;
+
+    private static final int MAX_COLLISION_RETRIES = 10;
+
     /**
      * Create a new short URL.
      *
      * Strategy:
      *   1. If a custom alias is provided → validate uniqueness, save.
-     *   2. Otherwise → save with placeholder, generate Base62(id), update.
+     *   2. Otherwise → generate a random alphanumeric short code (retry on collision).
      *   3. Push the mapping into Redis cache.
      */
     @Transactional
@@ -58,22 +63,24 @@ public class UrlService {
             return toResponse(url);
 
         } else {
-            // Save first to get the auto-increment ID
-            Url url = Url.builder()
-                    .shortCode("__temp__")  // placeholder
-                    .longUrl(request.getLongUrl())
-                    .expiryAt(request.getExpiryDate())
-                    .isActive(true)
-                    .build();
-            url = urlRepository.saveAndFlush(url);
-
-            // Encode the ID to Base62
-            shortCode = Base62Encoder.encode(url.getId());
-            url.setShortCode(shortCode);
-            url = urlRepository.save(url);
-
-            cacheUrl(url);
-            return toResponse(url);
+            // Generate a random short code, retrying on the rare collision
+            for (int attempt = 0; attempt < MAX_COLLISION_RETRIES; attempt++) {
+                shortCode = ShortCodeGenerator.generate(shortCodeLength);
+                if (!urlRepository.existsByShortCode(shortCode)) {
+                    Url url = Url.builder()
+                            .shortCode(shortCode)
+                            .longUrl(request.getLongUrl())
+                            .expiryAt(request.getExpiryDate())
+                            .isActive(true)
+                            .build();
+                    url = urlRepository.save(url);
+                    cacheUrl(url);
+                    return toResponse(url);
+                }
+                log.warn("Short code collision on attempt {} — retrying", attempt + 1);
+            }
+            throw new RuntimeException("Failed to generate unique short code after "
+                    + MAX_COLLISION_RETRIES + " attempts");
         }
     }
 

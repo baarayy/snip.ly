@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -12,13 +12,15 @@ import {
   HiOutlineGlobe,
 } from "react-icons/hi";
 import { getTrending, getRedirectUrl, TrendingItem } from "@/lib/api";
+import { useSocket, ClickEvent } from "@/lib/useSocket";
 
 export default function TrendingPage() {
   const [items, setItems] = useState<TrendingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { connected, onClickEvent } = useSocket();
 
-  const fetchTrending = async (isRefresh = false) => {
+  const fetchTrending = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
@@ -30,11 +32,19 @@ export default function TrendingPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTrending();
-  }, []);
+  }, [fetchTrending]);
+
+  // Real-time: re-fetch trending on every click event
+  useEffect(() => {
+    const unsub = onClickEvent((_event: ClickEvent) => {
+      fetchTrending(true);
+    });
+    return unsub;
+  }, [onClickEvent, fetchTrending]);
 
   const maxClicks = items.length > 0 ? items[0].totalClicks : 1;
 
@@ -71,8 +81,32 @@ export default function TrendingPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex justify-end mb-6"
+        className="flex items-center justify-between mb-6"
       >
+        {/* Live indicator */}
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium"
+          style={{
+            background: connected
+              ? "rgba(74, 222, 128, 0.1)"
+              : "rgba(248, 113, 113, 0.1)",
+            border: connected
+              ? "1px solid rgba(74, 222, 128, 0.2)"
+              : "1px solid rgba(248, 113, 113, 0.2)",
+            color: connected ? "#4ade80" : "#f87171",
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{
+              background: connected ? "#4ade80" : "#f87171",
+              boxShadow: connected ? "0 0 6px #4ade80" : "0 0 6px #f87171",
+              animation: connected ? "pulse 2s ease-in-out infinite" : "none",
+            }}
+          />
+          {connected ? "Live" : "Connecting..."}
+        </div>
+
         <motion.button
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
