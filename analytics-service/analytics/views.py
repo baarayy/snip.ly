@@ -90,9 +90,9 @@ class AnalyticsView(View):
 
 class TrendingView(View):
     """
-    GET /api/v1/trending?limit=10
+    GET /api/v1/trending?page=1&pageSize=20
 
-    Returns the top clicked short URLs with their metadata.
+    Returns paginated trending short URLs with their metadata.
     Aggregates from MongoDB click_events, then enriches with
     longUrl from the url-service.
     """
@@ -100,20 +100,37 @@ class TrendingView(View):
     URL_SERVICE_BASE = "http://url-service:8081"
 
     def get(self, request):
-        limit = min(int(request.GET.get("limit", 10)), 50)
+        page = max(int(request.GET.get("page", 1)), 1)
+        page_size = min(max(int(request.GET.get("pageSize", 20)), 1), 100)
         db = get_db()
         collection = db.click_events
 
-        # Aggregate top short codes by click count
+        # Count total distinct short codes
+        distinct_codes = collection.distinct("short_code")
+        total_items = len(distinct_codes)
+        total_pages = max(1, -(-total_items // page_size))  # ceil division
+
+        skip = (page - 1) * page_size
+
+        # Aggregate top short codes by click count with pagination
         pipeline = [
             {"$group": {"_id": "$short_code", "totalClicks": {"$sum": 1}}},
             {"$sort": {"totalClicks": -1}},
-            {"$limit": limit},
+            {"$skip": skip},
+            {"$limit": page_size},
         ]
         top_codes = list(collection.aggregate(pipeline))
 
         if not top_codes:
-            return JsonResponse({"trending": [], "total": 0})
+            return JsonResponse({
+                "trending": [],
+                "total": total_items,
+                "page": page,
+                "pageSize": page_size,
+                "totalPages": total_pages,
+                "hasNext": False,
+                "hasPrev": page > 1,
+            })
 
         # Enrich each with longUrl from url-service
         trending = []
@@ -139,11 +156,19 @@ class TrendingView(View):
                     "shortCode": short_code,
                     "longUrl": long_url,
                     "totalClicks": clicks,
-                    "rank": len(trending) + 1,
+                    "rank": skip + len(trending) + 1,
                 }
             )
 
-        return JsonResponse({"trending": trending, "total": len(trending)})
+        return JsonResponse({
+            "trending": trending,
+            "total": total_items,
+            "page": page,
+            "pageSize": page_size,
+            "totalPages": total_pages,
+            "hasNext": page < total_pages,
+            "hasPrev": page > 1,
+        })
 
 
 class HealthView(View):

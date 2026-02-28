@@ -57,6 +57,11 @@ export interface TrendingItem {
 export interface TrendingResponse {
   trending: TrendingItem[];
   total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 /* ── API functions ──────────────────────────────────────── */
@@ -118,9 +123,12 @@ export function getRedirectUrl(shortCode: string): string {
 }
 
 export async function getTrending(
-  limit: number = 10,
+  page: number = 1,
+  pageSize: number = 20,
 ): Promise<TrendingResponse> {
-  const res = await fetch(`${API_BASE}/api/v1/trending?limit=${limit}`);
+  const res = await fetch(
+    `${API_BASE}/api/v1/trending?page=${page}&pageSize=${pageSize}`,
+  );
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);
