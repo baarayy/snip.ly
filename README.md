@@ -8,45 +8,47 @@ A scalable URL shortener built with a **polyglot microservices** architecture. D
                       ┌──────────────┐
                       │  API Gateway │  (Nginx – port 8080)
                       └──────┬───────┘
-               ┌─────────────┼──────────────┐
-               ▼             ▼              ▼
-        ┌─────────────┐ ┌──────────┐ ┌────────────────┐
-        │ URL Service  │ │ Redirect │ │   Analytics    │
-        │ Java/Spring  │ │ Service  │ │    Service     │
-        │ Boot         │ │ TS/NestJS│ │ Python/Django  │
-        │ :8081        │ │ :8082    │ │ :8083          │
-        └──────┬───────┘ └────┬─────┘ └───────┬────────┘
-               │              │               │
-               ▼              ▼               ▼
-        ┌──────────┐   ┌──────────┐    ┌──────────┐
-        │PostgreSQL│   │  Redis   │    │ MongoDB  │
-        │  :5432   │   │  :6379   │    │  :27017  │
-        └──────────┘   └──────────┘    └──────────┘
-                              │
-                        ┌─────────────┐
-                        │  RabbitMQ   │
-                        │  :5672      │
-                        │  UI :15672  │
-                        └─────────────┘
+          ┌──────────┬───────┼──────────┬──────────┐
+          ▼          ▼       ▼          ▼          ▼
+   ┌───────────┐ ┌────────┐ ┌────────────┐ ┌──────────┐ ┌──────────┐
+   │URL Service│ │Redirect│ │  Analytics  │ │    WS    │ │  Client  │
+   │Java/Spring│ │Service │ │   Service   │ │ Service  │ │ Next.js  │
+   │  Boot     │ │TS/Nest │ │Python/Django│ │ Node.js  │ │  React   │
+   │  :8081    │ │ :8082  │ │   :8083     │ │ :8084    │ │  :3000   │
+   └─────┬─────┘ └───┬────┘ └─────┬──────┘ └────┬─────┘ └──────────┘
+         │           │            │              │
+         ▼           ▼            ▼              │
+   ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+   │PostgreSQL│ │  Redis   │ │ MongoDB  │       │
+   │  :5432   │ │  :6379   │ │  :27017  │       │
+   └──────────┘ └──────────┘ └──────────┘       │
+                      │                          │
+                ┌─────────────┐                  │
+                │  RabbitMQ   │◄─────────────────┘
+                │  :5672      │  (consumes click events)
+                │  UI :15672  │
+                └─────────────┘
 ```
 
 ## Services
 
-| Service               | Stack                   | Port | Database                              | Responsibility                                       |
-| --------------------- | ----------------------- | ---- | ------------------------------------- | ---------------------------------------------------- |
-| **URL Service**       | Java 17 + Spring Boot 3 | 8081 | PostgreSQL                            | Create short URLs, validate input, Base62 encoding   |
-| **Redirect Service**  | TypeScript + NestJS     | 8082 | Redis (cache) + PostgreSQL (fallback) | Handle redirects, check cache, publish click events  |
-| **Analytics Service** | Python 3.12 + Django 5  | 8083 | MongoDB                               | Consume click events from queue, serve analytics API |
-| **API Gateway**       | Nginx                   | 8080 | —                                     | Reverse proxy, rate limiting, routing                |
+| Service               | Stack                   | Port | Database                              | Responsibility                                               |
+| --------------------- | ----------------------- | ---- | ------------------------------------- | ------------------------------------------------------------ |
+| **URL Service**       | Java 17 + Spring Boot 3 | 8081 | PostgreSQL                            | Create short URLs, validate input, random short code gen     |
+| **Redirect Service**  | TypeScript + NestJS     | 8082 | Redis (cache) + PostgreSQL (fallback) | Handle redirects, check cache, publish click events          |
+| **Analytics Service** | Python 3.12 + Django 5  | 8083 | MongoDB                               | Consume click events from queue, serve analytics & trending  |
+| **WS Service**        | Node.js + Socket.IO     | 8084 | — (in-memory)                         | Real-time WebSocket relay, broadcast click & trending events |
+| **API Gateway**       | Nginx                   | 8080 | —                                     | Reverse proxy, rate limiting, routing, WebSocket upgrade     |
+| **Client**            | Next.js 14 + React 18   | 3000 | —                                     | Web UI with dark/light theme, live analytics dashboard       |
 
 ## Infrastructure
 
-| Component     | Port         | Purpose                              |
-| ------------- | ------------ | ------------------------------------ |
-| PostgreSQL 16 | 5432         | Relational store for URL records     |
-| MongoDB 7     | 27017        | Document store for click analytics   |
-| Redis 7       | 6379         | Cache layer for fast redirects       |
-| RabbitMQ 3    | 5672 / 15672 | Message queue for async click events |
+| Component     | Port         | Purpose                                         |
+| ------------- | ------------ | ----------------------------------------------- |
+| PostgreSQL 16 | 5432         | Relational store for URL records                |
+| MongoDB 7     | 27017        | Document store for click analytics              |
+| Redis 7       | 6379         | Cache layer for fast redirects                  |
+| RabbitMQ 3    | 5672 / 15672 | Message queue for async click events & WS relay |
 
 ## Quick Start (Docker Compose)
 
@@ -60,7 +62,7 @@ A scalable URL shortener built with a **polyglot microservices** architecture. D
 docker-compose up --build
 ```
 
-This starts all infrastructure + all 3 services + the API gateway.
+This starts all infrastructure + all 5 services (URL, Redirect, Analytics, WS, Client) + the API gateway.
 
 ### Test the API
 
@@ -86,9 +88,24 @@ curl http://localhost:8080/api/v1/urls/abc123/analytics
 
 ### Useful URLs
 
+- **Client UI:** http://localhost:3000
 - **API Gateway:** http://localhost:8080
+- **WebSocket (Socket.IO):** http://localhost:8080/socket.io/
 - **RabbitMQ Management:** http://localhost:15672 (urlshortener / urlshortener)
 - **Spring Actuator:** http://localhost:8081/actuator/health
+
+### Run Benchmarks
+
+```bash
+cd benchmarks
+npm install
+npm run bench          # Run all benchmarks
+npm run bench:url      # URL creation only
+npm run bench:redirect # Redirect service only
+npm run bench:analytics # Analytics + Trending
+npm run bench:ws       # WebSocket event delivery
+npm run bench:gateway  # End-to-end via Nginx
+```
 
 ## Kubernetes (Local with Minikube)
 
@@ -183,7 +200,7 @@ Get click analytics for a short code.
 This project demonstrates the following system design concepts:
 
 - **Microservices architecture** with polyglot tech stacks
-- **Base62 encoding** for short code generation (auto-increment ID → Base62)
+- **Secure random short codes** (7-char alphanumeric via SecureRandom)
 - **Cache-aside pattern** (Redis as read-through cache)
 - **Async event processing** (RabbitMQ pub/sub for analytics)
 - **API Gateway** pattern (Nginx reverse proxy + rate limiting)
@@ -193,6 +210,9 @@ This project demonstrates the following system design concepts:
 - **Horizontal scaling** (multiple replicas for read-heavy redirect service)
 - **TTL-based expiry** with background cleanup jobs
 - **Circuit breaker** mindset (graceful fallbacks when Redis/RabbitMQ are down)
+- **Real-time WebSocket** relay (Socket.IO via RabbitMQ consumer)
+- **Dark/Light theme** support with CSS variable-driven design tokens
+- **CI/CD pipeline** with GitHub Actions for automated testing
 
 ## Project Structure
 
@@ -201,40 +221,56 @@ url-shortener/
 ├── docker-compose.yml          # Local development orchestration
 ├── init-db.sql                 # PostgreSQL schema init
 ├── api-gateway/
-│   └── nginx.conf              # Reverse proxy config
-├── url-service/                # Java + Spring Boot
+│   └── nginx.conf              # Reverse proxy + WebSocket upgrade
+├── url-service/                # Java 17 + Spring Boot 3
 │   ├── Dockerfile
 │   ├── build.gradle
-│   └── src/main/java/com/urlshortener/urlservice/
-│       ├── UrlServiceApplication.java
-│       ├── config/             # Redis, RabbitMQ config
-│       ├── controller/         # REST endpoints
-│       ├── dto/                # Request/Response DTOs
-│       ├── entity/             # JPA entities
-│       ├── exception/          # Error handling
-│       ├── repository/         # Spring Data JPA
-│       └── service/            # Business logic + Base62
-├── redirect-service/           # TypeScript + NestJS
+│   └── src/
+│       ├── main/java/.../      # Controllers, services, entities, DTOs
+│       └── test/java/.../      # Unit & integration tests
+├── redirect-service/           # TypeScript + NestJS 10
 │   ├── Dockerfile
 │   ├── package.json
 │   └── src/
-│       ├── main.ts
-│       ├── app.module.ts
 │       ├── redirect/           # Controller + Service
 │       ├── redis/              # Redis client
 │       ├── database/           # PostgreSQL client
 │       ├── rabbitmq/           # Message publisher
-│       └── health/             # Health check
-├── analytics-service/          # Python + Django
+│       └── __tests__/          # Unit tests
+├── analytics-service/          # Python 3.12 + Django 5
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── manage.py
-│   ├── analytics_project/      # Django project settings
-│   └── analytics/              # Django app
+│   └── analytics/
+│       ├── views.py            # Analytics & Trending API views
 │       ├── consumer.py         # RabbitMQ consumer
-│       ├── mongo.py            # MongoDB client
-│       ├── views.py            # Analytics API views
-│       └── urls.py             # URL routing
+│       └── tests.py            # Unit tests
+├── ws-service/                 # Node.js + Socket.IO
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── index.js            # HTTP + Socket.IO + RabbitMQ consumer
+│       └── __tests__/          # Unit tests
+├── client/                     # Next.js 14 + React 18 + Tailwind
+│   ├── Dockerfile
+│   └── src/
+│       ├── app/                # Pages (shorten, analytics, trending, docs, status)
+│       ├── components/         # Navbar, Footer, BackgroundOrbs, ThemeProvider
+│       └── lib/                # API client, WebSocket hook
+├── benchmarks/                 # Performance benchmark suite (Node.js)
+│   ├── run-all.js              # Combined runner
+│   ├── bench-url-service.js
+│   ├── bench-redirect-service.js
+│   ├── bench-analytics-service.js
+│   ├── bench-ws-service.js
+│   └── bench-gateway.js
+├── docs/                       # Service documentation
+│   ├── url-service.md
+│   ├── redirect-service.md
+│   ├── analytics-service.md
+│   ├── ws-service.md
+│   └── client.md
+├── .github/workflows/          # CI pipeline
+│   └── ci.yml                  # Test on push to main
 └── k8s/                        # Kubernetes manifests
     ├── namespace.yaml
     ├── config.yaml
