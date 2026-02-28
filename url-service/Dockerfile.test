@@ -1,0 +1,9 @@
+# Dockerfile for running url-service tests (test-only image)
+FROM gradle:8.5-jdk17 AS test
+WORKDIR /app
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY src ./src
+RUN gradle test --no-daemon
+
+# The test results will be in /app/build/reports/tests/test/

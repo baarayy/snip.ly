@@ -11,26 +11,18 @@ jobs:
   url-service:
     name: URL Service Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: url-service
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-      - name: Init gradle wrapper
-        run: gradle wrapper
+      - name: Build and run tests in Docker
+        run: |
+          docker build -f url-service/Dockerfile.test -t url-service-test:ci url-service
 
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew
-
-      - name: Run tests
-        run: ./gradlew test --no-daemon
+      - name: Copy test report from container
+        run: |
+          id=$(docker create url-service-test:ci)
+          docker cp $id:/app/build/reports ./url-service/build/
+          docker rm $id
 
       - name: Upload test report
         if: always()
