@@ -1,0 +1,415 @@
+📘 Software Requirements Document (SRD)
+Project: Scalable URL Shortener System
+1. Introduction
+1.1 Purpose
+
+This document defines the functional and non-functional requirements for building a scalable, highly available URL shortening system similar to:
+
+Bitly
+
+TinyURL
+
+The goal is to design a production-ready microservices-based system capable of handling large-scale traffic.
+
+1.2 Scope
+
+The system will:
+
+Convert long URLs into short URLs
+
+Redirect short URLs to original URLs
+
+Track analytics
+
+Support optional custom aliases
+
+Handle high read traffic
+
+Be horizontally scalable
+
+1.3 Definitions
+Term	Meaning
+Short Code	Unique string representing shortened URL
+Redirect	HTTP 301/302 redirection to original URL
+Base62	Encoding using a-zA-Z0-9
+TTL	Time to Live (expiry time)
+2. Overall System Description
+2.1 System Architecture Overview
+
+High-Level Components:
+
+API Gateway
+
+URL Write Service
+
+Redirect Service
+
+Analytics Service
+
+Auth Service (optional)
+
+Cache (Redis)
+
+Database (SQL/NoSQL)
+
+Message Queue (Kafka/RabbitMQ)
+
+Load Balancer
+
+2.2 System Flow
+URL Creation Flow:
+
+Client → API Gateway → URL Service → DB → Response
+
+Redirect Flow:
+
+Client → DNS → Load Balancer → Redirect Service → Cache → DB → HTTP Redirect
+
+3. Functional Requirements
+3.1 URL Shortening
+FR-1: Create Short URL
+
+Description:
+System shall accept a long URL and generate a unique short URL.
+
+Input:
+
+POST /api/v1/urls
+{
+  "longUrl": "https://example.com/very/long/path",
+  "customAlias": "optional",
+  "expiryDate": "optional"
+}
+
+Output:
+
+{
+  "shortUrl": "https://short.ly/abc123",
+  "expiryDate": "timestamp"
+}
+
+Validation Rules:
+
+Must validate URL format
+
+Reject malicious URLs
+
+Max URL length: 2048 chars
+
+Custom alias must be unique
+
+3.2 URL Redirection
+FR-2: Redirect to Original URL
+
+Description:
+System shall redirect short URL to stored long URL.
+
+Request:
+
+GET https://short.ly/{shortCode}
+
+Behavior:
+
+Lookup shortCode in cache
+
+If miss → query database
+
+Return HTTP 301 (permanent) or 302 (temporary)
+
+Error Handling:
+
+404 if not found
+
+410 if expired
+
+3.3 Custom Alias Support
+
+User can provide custom short code
+
+Must validate uniqueness
+
+Reserved keywords blocked
+
+3.4 Expiry Support
+
+User may specify expiry date
+
+System auto-invalidates expired links
+
+Background job cleans expired entries
+
+3.5 Analytics Tracking
+FR-5: Track Click Events
+
+For every redirect:
+
+Timestamp
+
+IP address
+
+Geo location (optional)
+
+User agent
+
+Referrer
+
+Events pushed asynchronously to message queue.
+
+3.6 User Management (Optional Phase 2)
+
+User registration
+
+Login
+
+API key generation
+
+User-specific URLs
+
+View analytics dashboard
+
+4. Non-Functional Requirements
+4.1 Performance
+
+Redirect latency < 100ms (P95)
+
+Support 500 RPS peak (scalable to 10k RPS)
+
+Cache hit rate > 80%
+
+4.2 Availability
+
+99.99% uptime
+
+No single point of failure
+
+Load-balanced services
+
+4.3 Scalability
+
+System must support:
+
+100M URLs stored
+
+1B redirects/month
+
+Horizontal scaling supported for:
+
+Redirect service
+
+URL service
+
+Cache cluster
+
+Database read replicas
+
+4.4 Security
+
+HTTPS only
+
+Rate limiting
+
+SQL injection prevention
+
+XSS protection
+
+Input sanitization
+
+API authentication (optional)
+
+Abuse/spam detection
+
+4.5 Reliability
+
+Retry on transient failures
+
+Circuit breaker pattern
+
+Health check endpoints
+
+Graceful shutdown
+
+4.6 Observability
+
+Centralized logging
+
+Metrics collection (latency, RPS, errors)
+
+Distributed tracing
+
+Alerting
+
+5. Data Design
+5.1 URL Table
+Field	Type	Description
+id	bigint	Primary key
+short_code	varchar(10)	Unique indexed
+long_url	text	Original URL
+created_at	timestamp	Creation time
+expiry_at	timestamp	Nullable
+user_id	bigint	Nullable
+is_active	boolean	Default true
+
+Indexes:
+
+Unique index on short_code
+
+Index on user_id
+
+Index on expiry_at
+
+5.2 Click Analytics Table
+Field	Type
+id	bigint
+short_code	varchar
+timestamp	timestamp
+ip_address	varchar
+country	varchar
+user_agent	text
+
+Partitioned by month (for scale).
+
+6. Short Code Generation Strategy
+Option Selected: Auto Increment ID + Base62 Encoding
+
+Process:
+
+Insert row → get ID
+
+Encode ID to Base62
+
+Store as short_code
+
+Advantages:
+
+No collision
+
+Predictable length
+
+High performance
+
+Optional:
+
+Add salt/random prefix for security
+
+7. API Specifications
+7.1 Create URL
+
+POST /api/v1/urls
+
+Status Codes:
+
+201 Created
+
+400 Invalid URL
+
+409 Alias conflict
+
+7.2 Redirect
+
+GET /{shortCode}
+
+Status Codes:
+
+301 Redirect
+
+404 Not Found
+
+410 Gone (expired)
+
+7.3 Get Analytics
+
+GET /api/v1/urls/{shortCode}/analytics
+
+Response:
+
+{
+  "totalClicks": 1234,
+  "clicksByCountry": {},
+  "clicksByDate": {}
+}
+8. Microservices Breakdown
+8.1 URL Service (Write-heavy)
+
+Responsibilities:
+
+Create short URLs
+
+Validate input
+
+Store in DB
+
+8.2 Redirect Service (Read-heavy)
+
+Responsibilities:
+
+Handle redirects
+
+Check cache
+
+Push analytics event
+
+8.3 Analytics Service
+
+Responsibilities:
+
+Consume events from queue
+
+Store click events
+
+Provide aggregated stats
+
+8.4 Auth Service (Optional)
+9. Deployment Requirements
+9.1 Infrastructure
+
+Containerized (Docker)
+
+Kubernetes deployment
+
+Redis cluster
+
+SQL DB (PostgreSQL preferred)
+
+Message broker (Kafka recommended)
+
+9.2 Environment
+
+Dev
+
+Staging
+
+Production
+
+10. Assumptions
+
+System is read-heavy (90% redirects)
+
+Short code length: 6–8 characters
+
+Global deployment optional
+
+CDN optional in Phase 2
+
+11. Constraints
+
+Must support horizontal scaling
+
+Must avoid single point of failure
+
+Must maintain backward compatibility
+
+12. Future Enhancements
+
+QR code generation
+
+Link preview
+
+Password-protected URLs
+
+Custom domains
+
+CDN edge redirects
+
+Geo-routing
+
+A/B testing links

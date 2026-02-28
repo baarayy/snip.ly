@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.gradle/
+build/
+dist/
+*.jar
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# Env
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (local)
+postgres_data/
+mongo_data/
+redis_data/

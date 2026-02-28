@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway
+  namespace: url-shortener
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          # URL creation API
+          - path: /api/v1/urls
+            pathType: Prefix
+            backend:
+              service:
+                name: url-service
+                port:
+                  number: 8081
+
+          # Analytics API (must come before the redirect catch-all)
+          - path: /api/v1/urls/.+/analytics
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: analytics-service
+                port:
+                  number: 8083
+
+          # Redirect catch-all  (short codes)
+          - path: /[a-zA-Z0-9]+
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: redirect-service
+                port:
+                  number: 8082
