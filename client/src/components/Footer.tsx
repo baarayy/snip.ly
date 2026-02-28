@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { LogoFull } from "./Logo";
-import { HiOutlineHeart } from "react-icons/hi";
+import { HiOutlineHeart, HiOutlineArrowUp } from "react-icons/hi";
 
 const footerLinks = [
   {
@@ -10,6 +11,7 @@ const footerLinks = [
     links: [
       { label: "Shorten URL", href: "/" },
       { label: "Analytics", href: "/analytics" },
+      { label: "Trending", href: "/trending" },
       { label: "Documentation", href: "/docs" },
     ],
   },
@@ -35,6 +37,10 @@ const techStack = [
 ];
 
 export default function Footer() {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="relative z-10 border-t border-brand-purple/10 mt-24">
       <div className="max-w-6xl mx-auto px-6 pt-12 pb-8">
@@ -53,7 +59,7 @@ export default function Footer() {
               {techStack.map((tech) => (
                 <span
                   key={tech}
-                  className="px-2.5 py-1 text-[11px] font-medium tracking-wide rounded-full bg-brand-purple/10 text-brand-cream/50 border border-brand-purple/15"
+                  className="px-2.5 py-1 text-[11px] font-medium tracking-wide rounded-full bg-brand-purple/10 text-brand-cream/50 border border-brand-purple/15 hover:bg-brand-purple/20 hover:text-brand-cream/70 transition-all duration-200 cursor-default"
                 >
                   {tech}
                 </span>
@@ -69,10 +75,10 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2.5">
                 {group.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.href + link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-brand-cream/40 hover:text-brand-pink transition-colors duration-200"
+                      className="text-sm text-brand-cream/40 hover:text-brand-pink transition-colors duration-200 hover:translate-x-1 inline-block"
                     >
                       {link.label}
                     </Link>
@@ -90,6 +96,15 @@ export default function Footer() {
             using microservices
           </p>
           <div className="flex items-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={scrollToTop}
+              className="p-2 rounded-lg bg-brand-purple/10 hover:bg-brand-purple/20 transition-colors duration-200 text-brand-cream/40 hover:text-brand-cream/70"
+              aria-label="Back to top"
+            >
+              <HiOutlineArrowUp className="w-4 h-4" />
+            </motion.button>
             <a
               href="https://github.com/baarayy/snip.ly"
               target="_blank"

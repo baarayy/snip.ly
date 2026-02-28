@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   HiOutlineLink,
@@ -14,6 +14,7 @@ import {
   HiOutlineGlobe,
   HiOutlineShieldCheck,
   HiOutlineChartBar,
+  HiOutlineSparkles,
 } from "react-icons/hi";
 import { createShortUrl, CreateUrlResponse, getRedirectUrl } from "@/lib/api";
 
@@ -22,23 +23,65 @@ const features = [
     icon: HiOutlineLightningBolt,
     title: "Lightning Fast",
     desc: "Sub-10ms redirects via Redis caching layer",
+    color: "from-yellow-500/20 to-orange-500/10",
+    iconColor: "text-yellow-400",
   },
   {
     icon: HiOutlineGlobe,
     title: "Analytics",
     desc: "Real-time click tracking with geo data",
+    color: "from-blue-500/20 to-cyan-500/10",
+    iconColor: "text-blue-400",
   },
   {
     icon: HiOutlineShieldCheck,
     title: "Reliable",
     desc: "Event-driven architecture with RabbitMQ",
+    color: "from-green-500/20 to-emerald-500/10",
+    iconColor: "text-green-400",
   },
   {
     icon: HiOutlineChartBar,
     title: "Scalable",
     desc: "Polyglot microservices with K8s support",
+    color: "from-brand-purple/20 to-brand-pink/10",
+    iconColor: "text-brand-pink",
   },
 ];
+
+const techLogos = [
+  { name: "Spring Boot", color: "#6DB33F" },
+  { name: "NestJS", color: "#E0234E" },
+  { name: "Django", color: "#092E20" },
+  { name: "Next.js", color: "#FFFFFF" },
+  { name: "PostgreSQL", color: "#4169E1" },
+  { name: "MongoDB", color: "#47A248" },
+  { name: "Redis", color: "#DC382D" },
+  { name: "RabbitMQ", color: "#FF6600" },
+];
+
+/* Animated counter hook */
+function useCounter(target: number, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, target, duration]);
+  return { count, ref };
+}
 
 export default function HomePage() {
   const [longUrl, setLongUrl] = useState("");
@@ -102,19 +145,74 @@ export default function HomePage() {
           transition={{ delay: 0.1 }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-purple/10 border border-brand-purple/20 text-brand-pink text-xs font-medium tracking-wide mb-6"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-pink animate-pulse" />
+          <HiOutlineSparkles className="text-sm animate-pulse" />
           Polyglot Microservices Architecture
         </motion.div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold mb-5 leading-[1.1] tracking-tight">
-          <span className="gradient-text">Shorten.</span>{" "}
-          <span className="text-brand-cream/90">Share.</span>{" "}
-          <span className="gradient-text">Track.</span>
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="gradient-text inline-block"
+          >
+            Shorten.
+          </motion.span>{" "}
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.5 }}
+            className="text-brand-cream/90 inline-block"
+          >
+            Share.
+          </motion.span>{" "}
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="gradient-text inline-block"
+          >
+            Track.
+          </motion.span>
         </h1>
-        <p className="text-brand-cream/45 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="text-brand-cream/45 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed"
+        >
           Transform long URLs into clean, trackable links. Powered by
           Spring&nbsp;Boot, NestJS, and Django with real-time analytics.
-        </p>
+        </motion.p>
+
+        {/* Scrolling tech badges */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
+          className="flex items-center justify-center flex-wrap gap-2 mt-6"
+        >
+          {techLogos.map((tech, i) => (
+            <motion.span
+              key={tech.name}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: 0.6 + i * 0.05,
+                type: "spring",
+                bounce: 0.4,
+              }}
+              className="px-3 py-1 rounded-full text-[11px] font-medium tracking-wide border transition-all duration-200 hover:scale-105 cursor-default"
+              style={{
+                background: `${tech.color}12`,
+                borderColor: `${tech.color}30`,
+                color: tech.color,
+              }}
+            >
+              {tech.name}
+            </motion.span>
+          ))}
+        </motion.div>
       </motion.div>
 
       {/* Main Card */}
@@ -354,10 +452,13 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + i * 0.08 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
             className="glass glass-hover rounded-xl p-5 text-center group cursor-default"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-purple/20 to-brand-pink/10 flex items-center justify-center mx-auto mb-3 group-hover:from-brand-purple/30 group-hover:to-brand-pink/20 transition-all duration-200">
-              <feat.icon className="text-xl text-brand-pink" />
+            <div
+              className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feat.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200`}
+            >
+              <feat.icon className={`text-xl ${feat.iconColor}`} />
             </div>
             <h3 className="text-sm font-semibold text-brand-cream mb-1">
               {feat.title}
@@ -368,6 +469,9 @@ export default function HomePage() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* ── Stats Counter Section ─────────────────────────── */}
+      <StatsSection />
 
       {/* ── History ──────────────────────────────────────── */}
       <AnimatePresence>
@@ -425,5 +529,65 @@ export default function HomePage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* ── Stats Counter Section ─────────────────────────────── */
+function StatsSection() {
+  const stats = [
+    { label: "Microservices", value: 6, suffix: "" },
+    { label: "Languages", value: 4, suffix: "" },
+    { label: "Databases", value: 3, suffix: "" },
+    { label: "Redirect Speed", value: 10, suffix: "ms", prefix: "<" },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.65 }}
+      className="mt-14 glass rounded-2xl p-8 border border-brand-purple/15"
+    >
+      <h3 className="text-center text-[11px] font-semibold text-brand-cream/40 uppercase tracking-widest mb-6">
+        System Architecture
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {stats.map((stat, i) => (
+          <StatCounter key={stat.label} {...stat} delay={0.7 + i * 0.1} />
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function StatCounter({
+  label,
+  value,
+  suffix,
+  prefix,
+  delay,
+}: {
+  label: string;
+  value: number;
+  suffix: string;
+  prefix?: string;
+  delay: number;
+}) {
+  const { count, ref } = useCounter(value, 1500);
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay, type: "spring", bounce: 0.3 }}
+      className="text-center"
+    >
+      <p className="text-3xl md:text-4xl font-bold gradient-text tabular-nums">
+        {prefix}
+        {count}
+        {suffix}
+      </p>
+      <p className="text-brand-cream/40 text-xs font-medium mt-1">{label}</p>
+    </motion.div>
   );
 }
