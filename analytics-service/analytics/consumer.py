@@ -1,20 +1,30 @@
 """
-RabbitMQ consumer – runs in a background thread.
+RabbitMQ consumer - runs in a background thread.
 Listens on the 'click.events.queue' queue and persists events to MongoDB.
 """
 import json
 import logging
+import sys
 import time
 
 import pika
 from django.conf import settings
 from analytics.mongo import get_db
 
+# Force logging to stdout so Docker can capture it
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    stream=sys.stdout,
+)
 logger = logging.getLogger(__name__)
 
 QUEUE_NAME = "click.events.queue"
 EXCHANGE_NAME = "url.shortener.exchange"
 ROUTING_KEY = "click.event"
+
+# Global flag to ensure only one consumer runs per process
+_consumer_started = False
 
 
 def _on_message(ch, method, properties, body):
@@ -33,7 +43,7 @@ def _on_message(ch, method, properties, body):
             }
         )
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        logger.debug("Stored click event for %s", event.get("shortCode"))
+        logger.info("Stored click event for %s", event.get("shortCode"))
     except Exception:
         logger.exception("Failed to process click event")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
@@ -41,9 +51,19 @@ def _on_message(ch, method, properties, body):
 
 def start_consumer():
     """Connect to RabbitMQ and start consuming. Retries on failure."""
+    global _consumer_started
+    if _consumer_started:
+        return
+    _consumer_started = True
+
+    retry_delay = 5
     while True:
         try:
+            logger.info("Connecting to RabbitMQ at %s ...", settings.RABBITMQ_URL)
+            sys.stdout.flush()
             params = pika.URLParameters(settings.RABBITMQ_URL)
+            params.heartbeat = 600
+            params.blocked_connection_timeout = 300
             connection = pika.BlockingConnection(params)
             channel = connection.channel()
 
@@ -59,8 +79,10 @@ def start_consumer():
             channel.basic_qos(prefetch_count=10)
             channel.basic_consume(queue=QUEUE_NAME, on_message_callback=_on_message)
 
-            logger.info("Analytics consumer started – waiting for click events…")
+            logger.info("Analytics consumer started - waiting for click events")
+            sys.stdout.flush()
             channel.start_consuming()
         except Exception:
-            logger.exception("RabbitMQ consumer crashed – restarting in 5s")
-            time.sleep(5)
+            logger.exception("RabbitMQ consumer error - retrying in %ds", retry_delay)
+            sys.stdout.flush()
+            time.sleep(retry_delay)

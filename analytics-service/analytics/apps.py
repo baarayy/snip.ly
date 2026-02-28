@@ -1,4 +1,9 @@
+import logging
+import threading
+
 from django.apps import AppConfig
+
+logger = logging.getLogger(__name__)
 
 
 class AnalyticsConfig(AppConfig):
@@ -7,8 +12,10 @@ class AnalyticsConfig(AppConfig):
 
     def ready(self):
         """Start the RabbitMQ consumer in a background thread when Django starts."""
-        import threading
         from analytics.consumer import start_consumer
 
-        consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+        logger.info("AnalyticsConfig.ready() called — starting consumer thread")
+        consumer_thread = threading.Thread(
+            target=start_consumer, daemon=True, name="rabbitmq-consumer"
+        )
         consumer_thread.start()

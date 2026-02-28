@@ -12,8 +12,8 @@ COPY . .
 
 EXPOSE 8083
 
-# Run with gunicorn (2 workers for local dev)
+# Run with gunicorn (1 worker for local dev to keep consumer thread simple)
 CMD ["gunicorn", "analytics_project.wsgi:application", \
      "--bind", "0.0.0.0:8083", \
-     "--workers", "2", \
+     "--workers", "1", \
      "--timeout", "120"]
