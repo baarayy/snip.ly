@@ -7,7 +7,7 @@ import { RabbitMQService } from "./rabbitmq/rabbitmq.service";
 import { HealthController } from "./health/health.controller";
 
 @Module({
-  controllers: [RedirectController, HealthController],
+  controllers: [HealthController, RedirectController],
   providers: [RedirectService, RedisService, DatabaseService, RabbitMQService],
 })
 export class AppModule {}

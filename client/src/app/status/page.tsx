@@ -13,7 +13,7 @@ import { checkServiceHealth, ServiceHealth } from "@/lib/api";
 const SERVICES = [
   {
     name: "API Gateway",
-    url: "http://localhost:8080/health",
+    url: "http://localhost:8080/_health",
     description: "Nginx reverse proxy – routes requests to services",
     stack: "Nginx",
   },
@@ -25,7 +25,7 @@ const SERVICES = [
   },
   {
     name: "Redirect Service",
-    url: "http://localhost:8082/health",
+    url: "http://localhost:8082/_health",
     description: "Handles short code redirects with caching",
     stack: "TypeScript / NestJS",
   },
