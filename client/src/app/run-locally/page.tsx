@@ -27,8 +27,7 @@ const steps = [
     number: 1,
     title: "Clone the Repository",
     description: "Get the source code onto your local machine.",
-    command:
-      "git clone https://github.com/your-org/url-shortener.git\ncd url-shortener",
+    command: "git clone https://github.com/baarayy/snip.ly.git\ncd snip.ly",
   },
   {
     number: 2,
