@@ -5,11 +5,11 @@ A scalable URL shortener built with a **polyglot microservices** architecture. D
 ## Architecture
 
 ```
-                      ┌──────────────┐
-                      │  API Gateway │  (Nginx – port 8080)
-                      └──────┬───────┘
-          ┌──────────┬───────┼──────────┬──────────┐
-          ▼          ▼       ▼          ▼          ▼
+                        ┌──────────────┐
+                        │  API Gateway │  (Nginx – port 8080)
+                        └──────┬───────┘
+          ┌──────────┬────────────┼──────────────┬────────────┐
+          ▼          ▼            ▼              ▼            ▼
    ┌───────────┐ ┌────────┐ ┌─────────────┐ ┌──────────┐ ┌──────────┐
    │URL Service│ │Redirect│ │  Analytics  │ │    WS    │ │  Client  │
    │Java/Spring│ │Service │ │   Service   │ │ Service  │ │ Next.js  │
