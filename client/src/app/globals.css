@@ -250,6 +250,53 @@ body {
   pointer-events: none;
 }
 
+/* ── Animated light rays ───────────────────────────────── */
+.light-rays {
+  position: absolute;
+  width: 200vmax;
+  height: 200vmax;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(152, 37, 152, 0.04) 8deg,
+    transparent 16deg,
+    transparent 45deg,
+    rgba(228, 145, 201, 0.035) 53deg,
+    transparent 61deg,
+    transparent 90deg,
+    rgba(152, 37, 152, 0.03) 98deg,
+    transparent 106deg,
+    transparent 135deg,
+    rgba(241, 233, 233, 0.025) 143deg,
+    transparent 151deg,
+    transparent 180deg,
+    rgba(152, 37, 152, 0.04) 188deg,
+    transparent 196deg,
+    transparent 225deg,
+    rgba(228, 145, 201, 0.03) 233deg,
+    transparent 241deg,
+    transparent 270deg,
+    rgba(152, 37, 152, 0.035) 278deg,
+    transparent 286deg,
+    transparent 315deg,
+    rgba(241, 233, 233, 0.02) 323deg,
+    transparent 331deg,
+    transparent 360deg
+  );
+  animation: ray-rotate 45s linear infinite;
+  opacity: 0.7;
+  filter: blur(1px);
+}
+
+@keyframes ray-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Input styles ──────────────────────────────────────── */
 input:focus,
 textarea:focus {

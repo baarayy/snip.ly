@@ -47,6 +47,18 @@ export interface ServiceHealth {
   latency?: number;
 }
 
+export interface TrendingItem {
+  shortCode: string;
+  longUrl: string | null;
+  totalClicks: number;
+  rank: number;
+}
+
+export interface TrendingResponse {
+  trending: TrendingItem[];
+  total: number;
+}
+
 /* ── API functions ──────────────────────────────────────── */
 
 export async function createShortUrl(
@@ -103,4 +115,16 @@ export function getRedirectUrl(shortCode: string): string {
       ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
       : "http://localhost:8080";
   return `${base}/${shortCode}`;
+}
+
+export async function getTrending(
+  limit: number = 10,
+): Promise<TrendingResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/trending?limit=${limit}`);
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  return res.json();
 }

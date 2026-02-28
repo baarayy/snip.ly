@@ -10,6 +10,7 @@ import {
   HiOutlineBookOpen,
   HiOutlineTerminal,
   HiOutlineStatusOnline,
+  HiOutlineFire,
   HiOutlineMenu,
   HiOutlineX,
 } from "react-icons/hi";
@@ -18,6 +19,7 @@ import { LogoFull } from "./Logo";
 const links = [
   { href: "/", label: "Shorten", icon: HiOutlineLink },
   { href: "/analytics", label: "Analytics", icon: HiOutlineChartBar },
+  { href: "/trending", label: "Trending", icon: HiOutlineFire },
   { href: "/docs", label: "Docs", icon: HiOutlineBookOpen },
   { href: "/run-locally", label: "Run Locally", icon: HiOutlineTerminal },
   { href: "/status", label: "Status", icon: HiOutlineStatusOnline },

@@ -41,6 +41,12 @@ export default function BackgroundOrbs() {
           animationDelay: "4s",
         }}
       />
+
+      {/* Animated light rays */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="light-rays" />
+      </div>
+
       {/* Subtle grid overlay */}
       <div
         className="absolute inset-0 opacity-[0.03]"
