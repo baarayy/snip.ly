@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { getProfile } from "@/lib/api";
 
-export default function AuthCallbackPage() {
+function CallbackHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { setTokens } = useAuth();
@@ -53,5 +53,19 @@ export default function AuthCallbackPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-brand-purple border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CallbackHandler />
+    </Suspense>
   );
 }

@@ -28,7 +28,7 @@ interface UrlEntry {
   short_code: string;
   original_url: string;
   click_count: number;
-  created_at: string;
+  createdAt: string;
 }
 
 export default function DashboardPage() {
@@ -396,9 +396,9 @@ export default function DashboardPage() {
                         className="text-xs mt-0.5"
                         style={{ color: "var(--text-muted)" }}
                       >
-                        Created {new Date(key.created_at).toLocaleDateString()}
-                        {key.last_used_at &&
-                          ` · Last used ${new Date(key.last_used_at).toLocaleDateString()}`}
+                        Created {new Date(key.createdAt).toLocaleDateString()}
+                        {key.lastUsed &&
+                          ` · Last used ${new Date(key.lastUsed).toLocaleDateString()}`}
                       </p>
                     </div>
                     <button

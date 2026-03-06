@@ -299,7 +299,7 @@ export async function getMyUrls(
     short_code: string;
     original_url: string;
     click_count: number;
-    created_at: string;
+    createdAt: string;
   }>;
   total: number;
   page: number;
