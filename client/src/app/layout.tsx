@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackgroundOrbs from "@/components/BackgroundOrbs";
 import ThemeProvider from "@/components/ThemeProvider";
+import { AuthProvider } from "@/lib/AuthContext";
 
 export const metadata: Metadata = {
   title: "Snip.ly — URL Shortener",
@@ -26,10 +27,12 @@ export default function RootLayout({
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body className="min-h-screen relative flex flex-col">
         <ThemeProvider>
-          <BackgroundOrbs />
-          <Navbar />
-          <main className="relative z-10 pt-20 flex-1">{children}</main>
-          <Footer />
+          <AuthProvider>
+            <BackgroundOrbs />
+            <Navbar />
+            <main className="relative z-10 pt-20 flex-1">{children}</main>
+            <Footer />
+          </AuthProvider>
           <Toaster
             position="bottom-right"
             toastOptions={{

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,9 +15,14 @@ import {
   HiOutlineX,
   HiOutlineSun,
   HiOutlineMoon,
+  HiOutlineLogin,
+  HiOutlineViewGrid,
+  HiOutlineLogout,
+  HiOutlineUser,
 } from "react-icons/hi";
 import { LogoFull } from "./Logo";
 import { useTheme } from "./ThemeProvider";
+import { useAuth } from "@/lib/AuthContext";
 
 const links = [
   { href: "/", label: "Shorten", icon: HiOutlineLink },
@@ -33,12 +38,29 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
+  const { user, logout } = useAuth();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Track scroll to add compact style
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   return (
@@ -133,6 +155,104 @@ export default function Navbar() {
               )}
             </AnimatePresence>
           </motion.button>
+
+          {/* Auth section */}
+          {user ? (
+            <div className="relative ml-2" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors duration-200 hover:bg-brand-purple/10"
+              >
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full"
+                  />
+                ) : (
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background: "var(--brand-purple)",
+                      color: "white",
+                    }}
+                  >
+                    {(user.name || user.email)[0].toUpperCase()}
+                  </div>
+                )}
+              </button>
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-52 rounded-xl glass border border-brand-purple/20 shadow-xl overflow-hidden"
+                  >
+                    <div className="px-4 py-3 border-b border-brand-purple/10">
+                      <p
+                        className="text-sm font-medium truncate"
+                        style={{ color: "var(--cream)" }}
+                      >
+                        {user.name || "User"}
+                      </p>
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {user.email}
+                      </p>
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-brand-purple/10 transition-colors"
+                        style={{ color: "var(--cream)" }}
+                      >
+                        <HiOutlineViewGrid className="text-base" />
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setUserMenuOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm hover:bg-brand-purple/10 transition-colors w-full text-left"
+                        style={{ color: "var(--cream)" }}
+                      >
+                        <HiOutlineLogout className="text-base" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 ml-2">
+              <Link
+                href="/login"
+                className="px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 flex items-center gap-1.5"
+                style={{ color: "var(--text-muted)" }}
+              >
+                <HiOutlineLogin className="text-[15px]" />
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-colors duration-200"
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--brand-purple), var(--brand-teal))",
+                  color: "white",
+                }}
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -178,6 +298,51 @@ export default function Navbar() {
                   </Link>
                 );
               })}
+
+              {/* Mobile auth links */}
+              <div className="border-t border-brand-purple/10 mt-2 pt-2">
+                {user ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-brand-cream/55 hover:text-brand-cream hover:bg-brand-purple/10 transition-colors"
+                    >
+                      <HiOutlineViewGrid className="text-base" />
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setMobileOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-brand-cream/55 hover:text-brand-cream hover:bg-brand-purple/10 transition-colors w-full"
+                    >
+                      <HiOutlineLogout className="text-base" />
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-brand-cream/55 hover:text-brand-cream hover:bg-brand-purple/10 transition-colors"
+                    >
+                      <HiOutlineLogin className="text-base" />
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-brand-cream/55 hover:text-brand-cream hover:bg-brand-purple/10 transition-colors"
+                    >
+                      <HiOutlineUser className="text-base" />
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
